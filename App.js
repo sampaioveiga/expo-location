@@ -1,12 +1,38 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, View, StyleSheet } from 'react-native';
+import * as Location from 'expo-location';
+import Constants from 'expo-constants';
 
 export default function App() {
+  const [actualPosition, setActualPosition] = useState(null);
+
+  useEffect(() => {
+    (async () => {          // initialize location
+      let { status } = await Location.requestPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+    
+      // foreground task
+      await Location.watchPositionAsync(
+        {accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 10},
+        (position) => {
+          setActualPosition({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            speed: position.coords.speed,
+            heading: position.coords.heading,
+          });
+        }
+      );
+      
+    })();
+  });
+
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <Text style={styles.paragraph}>{JSON.stringify(actualPosition)}</Text>
     </View>
   );
 }
@@ -14,8 +40,15 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: Constants.statusBarHeight,
+    backgroundColor: '#ecf0f1',
+    padding: 8,
+  },
+  paragraph: {
+    margin: 24,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
